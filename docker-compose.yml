@@ -1,0 +1,10 @@
+version: "3.9"
+services:
+  manga-converter-go:
+    build: .
+    container_name: manga-converter-go
+    volumes:
+      - ./input:/app/input
+      - ./output:/app/output
+      - ./workdir:/app/workdir
+    restart: unless-stopped

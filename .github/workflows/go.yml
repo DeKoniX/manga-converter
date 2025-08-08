@@ -1,0 +1,51 @@
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
+
+name: Go
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  release:
+    name: Build and Upload Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.24
+
+      - name: Build binaries for multiple OS/ARCH
+        run: |
+          mkdir -p dist
+          GOOS=linux GOARCH=amd64 go build -ldflags "$LDFLAGS" -o dist/manga-converter-linux-amd64 ./cmd
+          GOOS=linux GOARCH=arm64 go build -ldflags "$LDFLAGS" -o dist/manga-converter-linux-arm64 ./cmd
+          GOOS=darwin GOARCH=amd64 go build -ldflags "$LDFLAGS" -o dist/manga-converter-darwin-amd64 ./cmd
+          GOOS=darwin GOARCH=arm64 go build -ldflags "$LDFLAGS" -o dist/manga-converter-darwin-arm64 ./cmd
+          GOOS=windows GOARCH=amd64 go build -ldflags "$LDFLAGS" -o dist/manga-converter-windows-amd64.exe ./cmd
+
+
+      - name: Create archives
+        run: |
+          cd dist
+          zip manga-converter-linux-amd64.zip manga-converter-linux-amd64
+          zip manga-converter-linux-arm64.zip manga-converter-linux-arm64
+          zip manga-converter-darwin-amd64.zip manga-converter-darwin-amd64
+          zip manga-converter-darwin-arm64.zip manga-converter-darwin-arm64
+          zip manga-converter-windows-amd64.zip manga-converter-windows-amd64.exe
+
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
